@@ -22,6 +22,7 @@ const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'messages' | 'send' | 'scheduled'>('messages');
 
   useEffect(() => {
+    console.log("VITE_API_URL from env:", import.meta.env.VITE_API_URL);
     fetchMessages();
   }, []);
 
@@ -38,19 +39,26 @@ const Dashboard: React.FC = () => {
   }, [messages, searchTerm]);
 
   const fetchMessages = async () => {
-    try {
-      setLoading(true);
-      const data = await messageService.getAllMessages();
-      setMessages(data);
-      setError(null);
-    } catch (err) {
-      setError('Failed to fetch messages');
-      console.error('Error fetching messages:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    const data = await messageService.getAllMessages();
+    setMessages(data);
+    setError(null);
+  } catch (err) { // err is implicitly of type 'unknown'
+    let errorMessage = 'Failed to fetch messages';
 
+    if (err instanceof Error) {
+      errorMessage = err.message;
+    } else if (typeof err === 'string') {
+      errorMessage = err;
+    }
+
+    setError(`Failed to fetch messages: ${errorMessage}`);
+    console.error('Error fetching messages:', err);
+  } finally {
+    setLoading(false);
+  }
+};
   const handleSearch = (term: string) => {
     setSearchTerm(term);
   };
@@ -74,7 +82,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="dashboard">
       <Header onRefresh={handleRefresh} />
-      
+
       <div className="dashboard-container">
         <div className="dashboard-header">
           <h1 className="dashboard-title">Welcome back, {user?.name}!</h1>
@@ -110,7 +118,7 @@ const Dashboard: React.FC = () => {
               selectedChannel={selectedChannel}
               onChannelSelect={handleChannelSelect}
             />
-        
+
             <SearchBar onSearch={handleSearch} searchTerm={searchTerm} />
 
             {error && (
@@ -120,8 +128,8 @@ const Dashboard: React.FC = () => {
               </div>
             )}
 
-            <MessageList 
-              messages={filteredMessages} 
+            <MessageList
+              messages={filteredMessages}
               loading={loading}
               onRefresh={handleRefresh}
             />

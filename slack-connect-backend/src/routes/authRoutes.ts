@@ -6,32 +6,100 @@ import jwt from "jsonwebtoken";
 
 const router = Router();
 
+// Utility to get JWT secret with proper typing
+const getJwtSecret = (): jwt.Secret => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is missing from environment variables");
+  }
+  return process.env.JWT_SECRET;
+};
+
+// ===================== SIGNUP =====================
 router.post("/signup", async (req, res) => {
-  const { name, email, password } = req.body;
-  const userRepository = AppDataSource.getRepository(User);
+  try {
+    const { name, email, password } = req.body;
 
-  const existingUser = await userRepository.findOneBy({ email });
-  if (existingUser) return res.status(400).json({ success: false, error: "User already exists" });
+    if (!name || !email || !password) {
+      return res
+        .status(400)
+        .json({ success: false, error: "All fields are required" });
+    }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = userRepository.create({ name, email, password: hashedPassword });
-  await userRepository.save(newUser);
+    const userRepository = AppDataSource.getRepository(User);
+    const existingUser = await userRepository.findOne({ where: { email } });
+    if (existingUser) {
+      return res
+        .status(400)
+        .json({ success: false, error: "User already exists" });
+    }
 
-  res.status(201).json({ success: true, message: "User created successfully" });
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = userRepository.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    await userRepository.save(newUser);
+
+    return res
+      .status(201)
+      .json({ success: true, message: "User created successfully" });
+  } catch (err) {
+    console.error("Signup error:", err);
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal server error" });
+  }
 });
 
+// ===================== LOGIN =====================
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  const userRepository = AppDataSource.getRepository(User);
+  try {
+    const { email, password } = req.body;
 
-  const user = await userRepository.findOneBy({ email });
-  if (!user) return res.status(401).json({ success: false, error: "Invalid credentials" });
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Email and password are required" });
+    }
 
-  const validPassword = await bcrypt.compare(password, user.password);
-  if (!validPassword) return res.status(401).json({ success: false, error: "Invalid credentials" });
+    const userRepository = AppDataSource.getRepository(User);
+    const user = await userRepository.findOne({ where: { email } });
 
-  const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET!, { expiresIn: "1h" });
-  res.json({ success: true, user, token });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid credentials" });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      return res
+        .status(401)
+        .json({ success: false, error: "Invalid credentials" });
+    }
+
+   // @ts-ignore
+const token = jwt.sign(
+  { id: user.id },
+  process.env.JWT_SECRET,
+  { expiresIn: process.env.JWT_EXPIRES_IN || "30d" }
+);
+
+
+
+    return res.json({
+      success: true,
+      user: { id: user.id, name: user.name, email: user.email },
+      token,
+    });
+  } catch (err) {
+    console.error("Login error:", err);
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal server error" });
+  }
 });
 
 export default router;
