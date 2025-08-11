@@ -1,0 +1,76 @@
+.message-list {
+  margin-top  : 2rem;
+}
+
+.message-list__header {
+  margin-bottom  : 1.5rem;
+}
+
+.message-list__title {
+  font-size  : 1.5rem;
+  font-weight  : 600;
+  color  : var(--text-primary);
+}
+
+.message-list__grid {
+  display  : grid;
+  grid-template-columns  : 1fr;
+  gap  : 1rem;
+}
+
+@media (min-width  : 768px) {
+  .message-list__grid {
+    grid-template-columns  : repeat(2, 1fr);
+  }
+}
+
+@media (min-width  : 1024px) {
+  .message-list__grid {
+    grid-template-columns  : repeat(3, 1fr);
+  }
+}
+
+.empty-state {
+  text-align  : center;
+  padding  : 4rem 2rem;
+  background-color  : var(--bg-primary);
+  border-radius  : var(--radius-lg);
+  border : 2px dashed var(--border-color);
+  margin-top : 2rem;
+}
+
+.empty-state__icon {
+  font-size : 4rem;
+  margin-bottom : 1rem;
+  display : block;
+}
+
+.empty-state__title {
+  font-size : 1.25rem;
+  font-weight : 600;
+  color : var(--text-primary);
+  margin-bottom : 0.5rem;
+}
+
+.empty-state__description {
+  color : var(--text-secondary);
+  margin-bottom : 1.5rem;
+  max-width : 28rem;
+  margin-left : auto;
+  margin-right : auto;
+}
+
+.empty-state__button {
+  background-color : var(--primary-color);
+  color : white;
+  padding : 0.75rem 1.5rem;
+  border-radius : var(--radius-md);
+  font-weight : 500;
+  transition : all 0.2s ease-in-out;
+}
+
+.empty-state__button :hover {
+  background-color : var(--primary-hover);
+  transform : translateY(-1px);
+  box-shadow : var(--shadow-md);
+}
